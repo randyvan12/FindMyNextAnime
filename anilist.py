@@ -1,23 +1,24 @@
-from flask import Flask, redirect
+from flask import Flask, render_template, request
 from string import Template
 import requests
 import json
+
 app = Flask(__name__)
 
-STATIC_DISPLAY_TEMPLATE = Template("""
-<h1> ${romaji}</h1>
-<img src=${imgURL}>
-""")
-
 @app.route("/")
-def hello():
-    return "Hello World!"
+def home_view():
+    return render_template('home.html', title="Home")
 
-@app.route("/<anime_name>")
-def anime_search(anime_name):
+@app.route("/about")
+def about_view():
+    return render_template('about.html', title ="About")
+
+@app.route("/animeInfo", methods=['POST'])
+def anime_page_view():
+    anime_name = request.form.get('search-bar')
     query = '''
-    query ($anime_name: String) { # Define which variables will be used in the query (id)
-    Media (search: $anime_name, type: ANIME) { # Insert our variables into the query arguments (id) (type: ANIME is hard-coded in the query)
+    query ($anime_name: String) {
+    Media (search: $anime_name, type: ANIME) {
     id
     title {
     romaji
@@ -37,6 +38,10 @@ def anime_search(anime_name):
 
     response = requests.post(url, json={'query': query, 'variables': variables})
     json_data = json.loads(response.text)
+    english = json_data['data']['Media']['title']['english']
     romaji = json_data['data']['Media']['title']['romaji']
     imageURL = json_data['data']['Media']['coverImage']['extraLarge']
-    return (STATIC_DISPLAY_TEMPLATE.substitute(romaji = romaji, imgURL = imageURL))
+    return render_template('animePage.html', title = english, imgURL = imageURL, romaji = romaji)
+
+if __name__ == "__main__":
+    app.run(debug=True)
