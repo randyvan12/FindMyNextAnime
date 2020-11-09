@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, url_for
 from string import Template
 import requests
 import json
@@ -17,31 +17,52 @@ def about_view():
 def anime_page_view():
     anime_name = request.form.get('search-bar')
     query = '''
-    query ($anime_name: String) {
-    Media (search: $anime_name, type: ANIME) {
-    id
-    title {
-    romaji
-    english
-    native
-    }
-    coverImage{
-        extraLarge
-    }
-    }
-    }
+        query ($id: Int, $page: Int, $perPage: Int, $search: String) {
+            Page (page: $page, perPage: $perPage) {
+                pageInfo {
+                    total
+                    currentPage
+                    lastPage
+                    hasNextPage
+                    perPage
+                }
+                media (id: $id, search: $search, type: ANIME) {
+                    id
+                    title {
+                        english
+                    }
+                    coverImage{
+                        extraLarge
+                    }
+                }
+            }
+        }
     '''
     url = 'https://graphql.anilist.co'
     variables = {
-    'anime_name': anime_name
+        'search': anime_name,
+        'page': 1,
+        'perPage': 3
     }
 
     response = requests.post(url, json={'query': query, 'variables': variables})
     json_data = json.loads(response.text)
-    english = json_data['data']['Media']['title']['english']
-    romaji = json_data['data']['Media']['title']['romaji']
-    imageURL = json_data['data']['Media']['coverImage']['extraLarge']
-    return render_template('animePage.html', title = english, imgURL = imageURL, romaji = romaji)
+
+    if 'errors' in json_data:
+        messages = []
+        for error in json_data['errors']:
+            messages.append(error['message'])
+    
+        return render_template('error.html', title = 'Error', msgs  = messages)
+
+    anime_list = json_data['data']['Page']['media']
+
+    english_names = []
+    url_list = []
+    for anime in anime_list:
+        english_names.append(anime['title']['english'])
+        url_list.append(anime['coverImage']['extraLarge'])
+    return render_template('animePage.html', titles = english_names, imgURLs = url_list, n = len(english_names))
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -1,0 +1,7 @@
+{% extends "header.html" %}
+
+{% block content %}
+    {% for msg in msgs %}
+        <p>Error: {{ msg }}</p>
+    {% endfor %}
+{% endblock content %}
