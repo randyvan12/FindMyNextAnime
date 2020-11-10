@@ -89,10 +89,7 @@ def authorize():
 #gets rid of the session cookie
 @app.route("/logout")
 def logout():
-    #TODO ADD LOGOUT BUTTON AFTER LOGGING IN
     session.clear()
-    # for key in list(session.keys()):
-    #     session.pop(key)
     return redirect('/user')
 
 #user webpage
@@ -112,10 +109,27 @@ def user_view():
     # res = requests.post("https://graphql.anilist.co",
     #                     headers={"Authorization": f"Bearer {accessToken}"}, json={"query": "{Viewer{name}}"}).json()
     # print(res)
+    url = "https://graphql.anilist.co"
     accessToken = session['access_token']
-    response = requests.post("https://graphql.anilist.co", headers={"Authorization": f"Bearer {accessToken}"}, json={"query": "{Viewer{name}}"}).json()
+
+    headers = {
+        "Authorization": f"Bearer {accessToken}"
+    }
+
+    query = '''
+    query{
+        Viewer{
+            name
+            avatar{
+                large
+            }
+        }
+    }
+    '''
+    response = requests.post(url, headers=headers, json={"query": query}).json()
     username = response['data']['Viewer']['name']
-    return render_template('user.html', username=username, login=dict(session).get('access_token', None))
+    imageURL = response['data']['Viewer']['avatar']['large']
+    return render_template('user.html', username=username, imgURL=imageURL, login=dict(session).get('access_token', None))
 
 if __name__ == "__main__":
     app.run(debug=True)

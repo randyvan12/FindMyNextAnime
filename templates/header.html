@@ -21,7 +21,7 @@
       </ul>
       <ul class="nav" style="align-self:flex-end">
         <li class="nav-item">
-          {% if login == None %}
+          {% if login == none %}
             <a class="nav-link" href="{{ url_for('login')}}">Login with AniList</a>
           {% else %}
             <a class="nav-link" href="{{ url_for('logout')}}">Logout</a>
