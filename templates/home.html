@@ -1,13 +1,16 @@
-{% extends "header.html" %}
+{% extends "layout.html" %}
 {% block content %}
-    <h1>Welcome to the Home Page!</h1>
-    <div class="content-section">
-        <form method="POST" action = "{{url_for('anime_page_view')}}">
-            <div class="form-group">
-                <input name="search-bar" type="text" placeholder="Enter an anime name">
-                <input type="submit" style="display: none">
-            </div>
-        </form>
+    <div class="container">
+        <div class="col text-center" style="padding-top: 30%;">
+            <h1>Welcome to the Home Page!</h1>
+            <form method="GET" action = "{{url_for('anime_results_view')}}">
+                <div class="form-group" style="padding-top: 5%;">
+                    <input class="text-center" name="search" type="text" placeholder="Enter an anime name" style="width: 40%;">
+                    <input type="number" name="page" style="display: none;" value="1"> 
+                    <input type="submit" style="display: none">
+                </div>
+            </form>
+        </div>
     </div>
 {% endblock content %}
 

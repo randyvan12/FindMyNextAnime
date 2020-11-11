@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, url_for, flash, redirect, session
+from flask import Flask, render_template, request, url_for, redirect, session
 from string import Template
 from authlib.integrations.flask_client import OAuth
 import requests
@@ -37,36 +37,54 @@ def home_view():
 def about_view():
     return render_template('about.html', title ="About", login=dict(session).get('access_token', None))
 
-#Animeinfo webpage
-@app.route("/animeInfo", methods=['POST'])
-def anime_page_view():
-    anime_name = request.form.get('search-bar')
+@app.route("/animeResults")
+def anime_results_view():
+    anime_name = request.args.get('search')
+    page_num = request.args.get('page')
     query = '''
-    query ($anime_name: String) {
-        Media (search: $anime_name, type: ANIME) {
-            id
-            title {
-                romaji
-                english
-                native
-            }
-            coverImage {
-                extraLarge
+        query ($id: Int, $page: Int, $perPage: Int, $search: String) {
+            Page (page: $page, perPage: $perPage) {
+                pageInfo {
+                    lastPage
+                }
+                media (id: $id, search: $search, type: ANIME) {
+                    id
+                    title {
+                        romaji
+                    }
+                    coverImage{
+                        medium
+                    }
+                }
             }
         }
-    }
     '''
     url = 'https://graphql.anilist.co'
     variables = {
-        'anime_name': anime_name
+        'search': anime_name,
+        'page': page_num,
+        'perPage': 5
     }
 
     response = requests.post(url, json={'query': query, 'variables': variables})
     json_data = json.loads(response.text)
-    english = json_data['data']['Media']['title']['english']
-    romaji = json_data['data']['Media']['title']['romaji']
-    imageURL = json_data['data']['Media']['coverImage']['extraLarge']
-    return render_template('animePage.html', title = english, imgURL = imageURL, romaji = romaji, login=dict(session).get('access_token', None))
+
+    if 'errors' in json_data:
+        messages = []
+        for error in json_data['errors']:
+            messages.append(error['message'])
+    
+        return render_template('error.html', title = 'Error', msgs  = messages)
+
+    anime_list = json_data['data']['Page']['media']
+    total_pages = json_data['data']['Page']['pageInfo']['lastPage']
+    romaji_names = []
+    url_list = []
+    for anime in anime_list:
+        romaji_names.append(anime['title']['romaji'])
+        url_list.append(anime['coverImage']['medium'])
+    return render_template('resultPage.html', titles = romaji_names, imgURLs = url_list, n = len(romaji_names), 
+    currentPage = int(page_num), numPages = total_pages, name = anime_name, login=dict(session).get('access_token', None))
 
 #login webpage
 @app.route('/login')
@@ -130,6 +148,7 @@ def user_view():
     username = response['data']['Viewer']['name']
     imageURL = response['data']['Viewer']['avatar']['large']
     return render_template('user.html', username=username, imgURL=imageURL, login=dict(session).get('access_token', None))
+
 
 if __name__ == "__main__":
     app.run(debug=True)
