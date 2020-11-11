@@ -4,9 +4,10 @@
     <div class="content-section">
         <form method="POST" action = "{{url_for('anime_page_view')}}">
             <div class="form-group">
-                <input name="search-bar" type="text" value="Enter an anime name">
+                <input name="search-bar" type="text" placeholder="Enter an anime name">
                 <input type="submit" style="display: none">
             </div>
         </form>
     </div>
 {% endblock content %}
+
