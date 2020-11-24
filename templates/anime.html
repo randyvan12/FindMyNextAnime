@@ -1,5 +1,62 @@
 {% extends "layout.html" %}
 {% block  content %}
-<h1> {{ name }} </h1>
-<img src="{{ imgURL }}">
+<div class="container-fluid">
+    <div class="jumbotron">
+        <div class="row">
+            <img src="{{ anime_info['img_URL'] }}">
+            <div class = "col-10"> 
+                <h1 class="display-4"> {{ anime_info['english'] }} </h1>
+                <hr class="my-4">
+                <p> {{ anime_info['description'] }}</p>
+                <div class="dropdown">
+                    {% if inList %}
+                    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    {{ anime_info['status'] }}
+                    </button>
+                    {% else %}
+                    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Add to List
+                    {% endif %}
+                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                        {% if not inList %}
+                        <a class="dropdown-item" href="{{ url_for('change', anime_id = anime_info['id'], change = 'CURRENT') }}">Watching</a>
+                        <a class="dropdown-item" href="{{ url_for('change', anime_id = anime_info['id'], change = 'PLANNING') }}">Planning to Watch</a>
+                        {% else %}
+                        <a class="dropdown-item" href="{{ url_for('change', anime_id = anime_info['id'], change = 'CURRENT') }}">Watching</a>
+                        <a class="dropdown-item" href="{{ url_for('change', anime_id = anime_info['id'], change = 'PLANNING') }}">Planning to Watch</a>
+                        <a class="dropdown-item" href="{{ url_for('change', anime_id = anime_info['id'], change = 'COMPLETED') }}">Completed</a>
+                        <a class="dropdown-item" href="{{ url_for('change', anime_id = anime_info['id'], change = 'PAUSED') }}">Pause</a>
+                        <a class="dropdown-item" href="{{ url_for('change', anime_id = anime_info['id'], change = 'DROPPED') }}">Drop</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm">
+            <h6> Other Names </h6>
+            <p> {{ anime_info['romaji'] }} </p>
+            <h6> Studio </h6>
+            <p> {{ anime_info['studio'] }} </p>
+            <h6> Episodes </h6>
+            <p> {{ anime_info['episodes'] }} </p>
+            <h6> Score </h6>
+            <p> Score: {{ anime_info['score'] }} </p>
+            <h6> Start Date </h6>
+            <p> Start Date: {{ anime_info['start_date'] }} </p>
+            <h6> End Date </h6>
+            <p> End Date: {{ anime_info['end_date'] }} </p>
+        </div>
+        <div class="col-sm">
+          One of three columns
+        </div>
+        <div class="col-sm">
+          One of three columns
+        </div>
+      </div>
+</div>
 {% endblock content %}

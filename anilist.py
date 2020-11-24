@@ -3,7 +3,7 @@ from string import Template
 from authlib.integrations.flask_client import OAuth
 import requests
 import json
-
+import random
 # for auth
 from datetime import timedelta
 from auth_decorator import login_required
@@ -98,23 +98,84 @@ def anime_results_view():
 def anime_view():
     anime_name = request.args.get("anime_name")
     query = '''
-    query ($search: String) {
+    query ($search: String, $id: Int) {
         Media (search: $search, type: ANIME) {
+            title{
+                romaji
+                english
+            }
             coverImage{
                 large
+            }
+            startDate{
+                year
+                month
+                day
+            }
+            endDate{
+                year
+                month
+                day
+            }
+            studios(isMain: true){
+                nodes{
+                    name
+                }
+            }
+            id
+            episodes
+            averageScore
+            description
+        }
+        MediaListCollection(userId: $id, type: ANIME status_in: [COMPLETED, CURRENT, DROPPED, PLANNING, PAUSED]){
+            lists{
+                entries{
+                    media{
+                        id
+                    }
+                    status
+                }
             }
         }
     }
     '''
 
     variables = {
-        'search': anime_name
+        'search': anime_name,
+        'id': session['userID']
     }
+
     url = 'https://graphql.anilist.co'
+
     response = requests.post(
         url, json={'query': query, 'variables': variables}).json()
-    imgURL = response['data']['Media']['coverImage']['large']
-    return render_template('anime.html', name=anime_name, imgURL=imgURL, login=dict(session).get('access_token', None))
+
+    #retrieval of information
+    anime_info = {}
+    response_data = response['data']['Media']
+    anime_list = []
+    for item in response['data']['MediaListCollection']['lists']:
+        anime_list += item['entries']
+
+    anime_info['img_URL'] = response_data['coverImage']['large']
+    anime_info['romaji'] = response_data['title']['romaji']
+    anime_info['english'] = response_data['title']['english']
+    anime_info['start_date'] = str(response_data['startDate']['month']) + '/' + str(response_data['startDate']['day']) + '/' + str(response_data['startDate']['year'])
+    anime_info['end_date'] = str(response_data['endDate']['month']) + '/' + str(response_data['endDate']['day']) + '/' + str(response_data['endDate']['year'])
+    anime_info['episodes'] = response_data['episodes']
+    anime_info['score'] = response_data['averageScore']
+    anime_info['studio'] = response_data['studios']['nodes'][0]['name']
+    anime_info['description'] = response_data['description']
+    anime_info['id'] = response_data['id']
+
+    #Checks if the anime is in your list and sets the drop down accordingly
+    inList = False
+    for anime in anime_list:
+        if anime['media']['id'] == anime_info['id']:
+            inList = True
+            anime_info['status'] = anime['status']
+
+    return render_template('anime.html', anime_info = anime_info, inList = inList, login=dict(session).get('access_token', None))
 
 # login webpage
 
@@ -165,15 +226,102 @@ def user_view():
             avatar{
                 large
             }
+            id
         }
     }
     '''
-    response = requests.post(url, headers=headers, json={
-                             "query": query}).json()
-    username = response['data']['Viewer']['name']
-    imageURL = response['data']['Viewer']['avatar']['large']
-    return render_template('user.html', username=username, imgURL=imageURL, login=dict(session).get('access_token', None))
+    response = requests.post(url, headers=headers, json={"query": query}).json()
 
+    user_info = {}
+    response_data = response['data']['Viewer']
+    user_info['username'] = response_data['name']
+    user_info['img_URL'] = response_data['avatar']['large']
+    session['userID'] = response['data']['Viewer']['id']
+    return render_template('user.html', user_info = user_info, login=dict(session).get('access_token', None))
+
+@app.route("/random")
+def random_view():
+    anime_info = {}
+    while True:
+        randint = random.randint(0, 100000)
+        query = '''
+        query ($id: Int) {
+            Media (id: $id, type: ANIME) {
+                title{
+                    romaji
+                    english
+                }
+                coverImage{
+                    large
+                }
+                startDate{
+                    year
+                    month
+                    day
+                }
+                endDate{
+                    year
+                    month
+                    day
+                }
+                studios(isMain: true){
+                    nodes{
+                        name
+                    }
+                }
+                episodes
+                averageScore
+            }
+        }
+        '''
+        variables = {
+        'id': randint
+        }
+        url = 'https://graphql.anilist.co'
+
+        response = requests.post(url, json={'query': query, 'variables': variables}).json()
+        print(response)
+        try:
+            response_data = response['data']['Media']
+            anime_info['img_URL'] = response_data['coverImage']['large']
+            anime_info['romaji'] = response_data['title']['romaji']
+            anime_info['english'] = response_data['title']['english']
+            anime_info['start_date'] = str(response_data['startDate']['month']) + '/' + str(response_data['startDate']['day']) + '/' + str(response_data['startDate']['year'])
+            anime_info['end_date'] = str(response_data['endDate']['month']) + '/' + str(response_data['endDate']['day']) + '/' + str(response_data['endDate']['year'])
+            anime_info['episodes'] = response_data['episodes']
+            anime_info['score'] = response_data['averageScore']
+            anime_info['studio'] = response_data['studios']['nodes'][0]['name']
+            break
+        except:
+            continue
+    return render_template('anime.html', anime_info = anime_info, login=dict(session).get('access_token', None))
+
+@app.route("/change")
+def change():
+    id = request.args.get('anime_id')
+    status = request.args.get('change')
+    accessToken = session['access_token']
+    headers = {
+        "Authorization": f"Bearer {accessToken}"
+    }
+    
+    query = '''
+    mutation ($mediaId: Int, $status: MediaListStatus) {
+        SaveMediaListEntry (mediaId: $mediaId, status: $status) {
+            id
+            status
+        }
+    }
+    '''
+
+    variables = {
+        'mediaId': id,
+        'status': status
+    }
+
+    url = 'https://graphql.anilist.co'
+    requests.post(url, headers=headers, json={'query': query, 'variables': variables}).json()
+    return render_template('home.html')
 
 if __name__ == "__main__":
     app.run(debug=True)
