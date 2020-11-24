@@ -42,12 +42,12 @@ def anime_results_view():
     anime_name = request.args.get('search')
     page_num = request.args.get('page')
     query = '''
-        query ($id: Int, $page: Int, $perPage: Int, $search: String) {
+        query ($page: Int, $perPage: Int, $search: String) {
             Page (page: $page, perPage: $perPage) {
                 pageInfo {
                     lastPage
                 }
-                media (id: $id, search: $search, type: ANIME) {
+                media (search: $search, type: ANIME) {
                     id
                     title {
                         romaji
@@ -141,14 +141,45 @@ def user_view():
             avatar{
                 large
             }
+            id
         }
     }
     '''
+
     response = requests.post(url, headers=headers, json={"query": query}).json()
     username = response['data']['Viewer']['name']
     imageURL = response['data']['Viewer']['avatar']['large']
+    session['userID'] = response['data']['Viewer']['id']
+
     return render_template('user.html', username=username, imgURL=imageURL, login=dict(session).get('access_token', None))
 
+@app.route("/recommendation")
+def recommendation():
+    url = "https://graphql.anilist.co"
+    query = '''
+    query($id: Int){
+        MediaListCollection(userId: $id, type: ANIME, status_in: [COMPLETED]){
+            lists{
+                entries{
+                    media{
+                        title{
+                            native
+                        }
+                    }
+                }
+            }
+        }
+    }
+    '''
+    variables = {
+        'id': session['userID']
+    }
+
+    response2 = requests.post(url, json={'query': query, 'variables': variables}).json()
+    anime_list = response2['data']['MediaListCollection']['lists'][0]['entries']
+    for anime in anime_list:
+        print(anime['media']['title']['native'])
+    return render_template('home.html', title="Home", login=dict(session).get('access_token', None))
 
 if __name__ == "__main__":
     app.run(debug=True)
