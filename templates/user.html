@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
 {% block  content %}
-<h1> {{ username }} </h1>
-<img src="{{imgURL}}">
+<h1> {{ user_info['username'] }} </h1>
+<img src="{{ user_info['img_URL'] }}">
 {% endblock content %}
