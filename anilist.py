@@ -87,19 +87,21 @@ def anime_results_view():
     total_pages = json_data['data']['Page']['pageInfo']['lastPage']
     romaji_names = []
     url_list = []
+    id_list = []
     for anime in anime_list:
         romaji_names.append(anime['title']['romaji'])
         url_list.append(anime['coverImage']['medium'])
+        id_list.append(anime['id'])
     return render_template('resultPage.html', titles=romaji_names, imgURLs=url_list, n=len(romaji_names),
-                           currentPage=int(page_num), numPages=total_pages, name=anime_name, login=dict(session).get('access_token', None))
+                           currentPage=int(page_num), numPages=total_pages, name=anime_name, ids = id_list, login=dict(session).get('access_token', None))
 
 
 @app.route('/anime')
 def anime_view():
-    anime_name = request.args.get("anime_name")
+    anime_id = request.args.get("anime_id")
     query = '''
-    query ($search: String, $id: Int) {
-        Media (search: $search, type: ANIME) {
+    query ($id: Int, $userId: Int) {
+        Media (id: $id, type: ANIME) {
             title{
                 romaji
                 english
@@ -122,27 +124,28 @@ def anime_view():
                     name
                 }
             }
+            idMal
             id
             episodes
             averageScore
             description
         }
-        MediaListCollection(userId: $id, type: ANIME status_in: [COMPLETED, CURRENT, DROPPED, PLANNING, PAUSED]){
+        MediaListCollection(userId: $userId, type: ANIME status_in: [COMPLETED, CURRENT, DROPPED, PLANNING, PAUSED]){
             lists{
                 entries{
                     media{
                         id
                     }
                     status
+                    mediaId
                 }
             }
         }
     }
     '''
-
     variables = {
-        'search': anime_name,
-        'id': session['userID']
+        'id': anime_id,
+        'userId': session['userID'],
     }
 
     url = 'https://graphql.anilist.co'
@@ -174,7 +177,22 @@ def anime_view():
         if anime['media']['id'] == anime_info['id']:
             inList = True
             anime_info['status'] = anime['status']
-
+            break
+    
+    if inList:
+        media_query = '''
+            query($id: Int, $mediaId: Int){
+                MediaList(userId: $id, mediaId: $mediaId){
+                    id
+                }
+            }
+        '''
+        variables = {
+            'id': session['userID'],
+            'mediaId': anime_info['id']
+        }
+        response = requests.post(url, json={'query': media_query, 'variables': variables}).json()
+        anime_info['media_list_id'] = response['data']['MediaList']['id']
     return render_template('anime.html', anime_info = anime_info, inList = inList, login=dict(session).get('access_token', None))
 
 # login webpage
@@ -237,6 +255,7 @@ def user_view():
     user_info['username'] = response_data['name']
     user_info['img_URL'] = response_data['avatar']['large']
     session['userID'] = response['data']['Viewer']['id']
+    print(session['userID'])
     return render_template('user.html', user_info = user_info, login=dict(session).get('access_token', None))
 
 @app.route("/random")
@@ -280,7 +299,6 @@ def random_view():
         url = 'https://graphql.anilist.co'
 
         response = requests.post(url, json={'query': query, 'variables': variables}).json()
-        print(response)
         try:
             response_data = response['data']['Media']
             anime_info['img_URL'] = response_data['coverImage']['large']
@@ -298,30 +316,41 @@ def random_view():
 
 @app.route("/change")
 def change():
-    id = request.args.get('anime_id')
-    status = request.args.get('change')
+    anime_id = request.args.get('anime_id')
+    media_action = request.args.get('change')
     accessToken = session['access_token']
+    media_list_id = request.args.get('media_list_id')
     headers = {
         "Authorization": f"Bearer {accessToken}"
     }
-    
-    query = '''
-    mutation ($mediaId: Int, $status: MediaListStatus) {
-        SaveMediaListEntry (mediaId: $mediaId, status: $status) {
-            id
-            status
-        }
-    }
-    '''
 
+    if media_action == 'DELETE':
+        query = '''
+        mutation ($media_list_id: Int){
+            DeleteMediaListEntry (id: $media_list_id) {
+                deleted
+            }
+        }
+        '''
+    else:
+        query = '''
+        mutation ($id: Int, $status: MediaListStatus) {
+            SaveMediaListEntry (mediaId: $id, status: $status) {
+                id
+                status
+            }
+        }
+        '''
     variables = {
-        'mediaId': id,
-        'status': status
+        'id': anime_id,
+        'status': media_action,
+        'media_list_id': media_list_id
     }
 
     url = 'https://graphql.anilist.co'
-    requests.post(url, headers=headers, json={'query': query, 'variables': variables}).json()
-    return render_template('home.html')
+    requests.post(url, headers=headers, json={'query': query, 'variables': variables})
 
+    redirect_url = url_for('anime_view', anime_id = anime_id)
+    return redirect(redirect_url)
 if __name__ == "__main__":
     app.run(debug=True)
