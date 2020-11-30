@@ -36,29 +36,69 @@
         </div>
     </div>
 </div>
-
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-sm">
-            <h6> Other Names </h6>
-            <p> {{ anime_info['romaji'] }} </p>
-            <h6> Studio </h6>
-            <p> {{ anime_info['studio'] }} </p>
+    <div class="row" style="background-color:#e9ecef">
+        <span class="border border-dark rounded col-4 p-3">
+            <h6> Format </h6>
+            <p> {{ anime_info['format'] }}</p>
             <h6> Episodes </h6>
             <p> {{ anime_info['episodes'] }} </p>
+            <h6> Studio </h6>
+            <p> {{ anime_info['studio'] }} </p>
+            <h6> Genres </h6>
+            <p> 
+                {% for genres in anime_info['genres'] %}
+                {{genres}}{{ ", " if not loop.last }}
+                {% endfor %}
+            </p>
             <h6> Score </h6>
-            <p> Score: {{ anime_info['score'] }} </p>
+            <p> {{ anime_info['score'] }} </p>
+            <h6> Status </h6>
+            <p> {{ anime_info['status'] }} </p>
             <h6> Start Date </h6>
-            <p> Start Date: {{ anime_info['start_date'] }} </p>
+            <p> {{ anime_info['start_date'] }} </p>
             <h6> End Date </h6>
-            <p> End Date: {{ anime_info['end_date'] }} </p>
-        </div>
-        <div class="col-sm">
-            One of three columns
-        </div>
-        <div class="col-sm">
-            One of three columns
-        </div>
-      </div>
+            <p> {{ anime_info['end_date'] }} </p>
+            <h6> Season </h6>
+            <p> {{ anime_info['season'] }} </p>
+            <h6> Source </h6>
+            <p> {{ anime_info['source'] }} </p>
+            <h6> Other Names </h6>
+            <p> {{ anime_info['english'] }} </p>
+        </span>
+        <span class="border border-dark rounded col-4 p-3">
+            <h6>Opening</h6>
+            <div class="embed-responsive embed-responsive-16by9">
+                <iframe class="embed-responsive-item" src = "{{ anime_info['OP'] }}" allowfullscreen></iframe>
+            </div>              
+            <h6>Ending</h6>
+            <div class="embed-responsive embed-responsive-16by9">
+                <iframe class="embed-responsive-item" src = "{{ anime_info['ED'] }}" allowfullscreen></iframe>
+            </div>  
+        </span>
+        <span class="border border-dark rounded col-4 p-3">
+            <h6>Main Characters</h6>
+            <table>
+                {% for i in range(anime_info['character_names']|length) %}
+                <tr>
+                    <td>
+                        <img src="{{ anime_info['character_images'][i] }}">
+                    </td>
+                    <td>
+                        <h4>
+                            {{ anime_info['character_names'][i] }}
+                        </h4>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </span>
+    </div>
+</div>
+<div class="container p-5" >
+    <div class="text-center">
+        <button type="button" class="btn btn-primary btn-lg">Previous</button>
+        <button type="button" class="btn btn-primary btn-lg">Next</button>
+    </div>
 </div>
 {% endblock content %}
