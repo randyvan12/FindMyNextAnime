@@ -1,2 +1,2 @@
-# AniList recommandation
-Using Anilist API to create a webapp to give a recommandation
+# WhatShouldIWatchNext?
+A webapp that recommmands what you should watch next using the AniList API.

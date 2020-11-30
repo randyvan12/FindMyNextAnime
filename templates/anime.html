@@ -1,0 +1,104 @@
+{% extends "layout.html" %}
+{% block  content %}
+<div class="container-fluid">
+    <div class="jumbotron">
+        <div class="row">
+            <img src="{{ anime_info['img_URL'] }}">
+            <div class = "col-10"> 
+                <h1 class="display-4"> {{ anime_info['romaji'] }} </h1>
+                <hr class="my-4">
+                <p> {{ anime_info['description'] }}</p>
+                <div class="dropdown">
+                    {% if inList %}
+                    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {{ anime_info['status'] }}
+                    </button>
+                    {% else %}
+                    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Add to List
+                    </button>
+                    {% endif %}
+                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                        {% if not inList %}
+                        <a class="dropdown-item" href="{{ url_for('change', anime_id = anime_info['id'], change = 'CURRENT') }}">Watching</a>
+                        <a class="dropdown-item" href="{{ url_for('change', anime_id = anime_info['id'], change = 'PLANNING') }}">Planning to Watch</a>
+                        {% else %}
+                        <a class="dropdown-item" href="{{ url_for('change', anime_id = anime_info['id'], change = 'CURRENT') }}">Watching</a>
+                        <a class="dropdown-item" href="{{ url_for('change', anime_id = anime_info['id'], change = 'PLANNING') }}">Planning to Watch</a>
+                        <a class="dropdown-item" href="{{ url_for('change', anime_id = anime_info['id'], change = 'COMPLETED') }}">Completed</a>
+                        <a class="dropdown-item" href="{{ url_for('change', anime_id = anime_info['id'], change = 'PAUSED') }}">Pause</a>
+                        <a class="dropdown-item" href="{{ url_for('change', anime_id = anime_info['id'], change = 'DROPPED') }}">Drop</a>
+                        <a class="dropdown-item" href="{{ url_for('change', anime_id = anime_info['id'], media_list_id = anime_info['media_list_id'], change = 'DELETE') }}">Delete</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container-fluid">
+    <div class="row" style="background-color:#e9ecef">
+        <span class="border border-dark rounded col-4 p-3">
+            <h6> Format </h6>
+            <p> {{ anime_info['format'] }}</p>
+            <h6> Episodes </h6>
+            <p> {{ anime_info['episodes'] }} </p>
+            <h6> Studio </h6>
+            <p> {{ anime_info['studio'] }} </p>
+            <h6> Genres </h6>
+            <p> 
+                {% for genres in anime_info['genres'] %}
+                {{genres}}{{ ", " if not loop.last }}
+                {% endfor %}
+            </p>
+            <h6> Score </h6>
+            <p> {{ anime_info['score'] }} </p>
+            <h6> Status </h6>
+            <p> {{ anime_info['status'] }} </p>
+            <h6> Start Date </h6>
+            <p> {{ anime_info['start_date'] }} </p>
+            <h6> End Date </h6>
+            <p> {{ anime_info['end_date'] }} </p>
+            <h6> Season </h6>
+            <p> {{ anime_info['season'] }} </p>
+            <h6> Source </h6>
+            <p> {{ anime_info['source'] }} </p>
+            <h6> Other Names </h6>
+            <p> {{ anime_info['english'] }} </p>
+        </span>
+        <span class="border border-dark rounded col-4 p-3">
+            <h6>Opening</h6>
+            <div class="embed-responsive embed-responsive-16by9">
+                <iframe class="embed-responsive-item" src = "{{ anime_info['OP'] }}" allowfullscreen></iframe>
+            </div>              
+            <h6>Ending</h6>
+            <div class="embed-responsive embed-responsive-16by9">
+                <iframe class="embed-responsive-item" src = "{{ anime_info['ED'] }}" allowfullscreen></iframe>
+            </div>  
+        </span>
+        <span class="border border-dark rounded col-4 p-3">
+            <h6>Main Characters</h6>
+            <table>
+                {% for i in range(anime_info['character_names']|length) %}
+                <tr>
+                    <td>
+                        <img src="{{ anime_info['character_images'][i] }}">
+                    </td>
+                    <td>
+                        <h4>
+                            {{ anime_info['character_names'][i] }}
+                        </h4>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </span>
+    </div>
+</div>
+<div class="container p-5" >
+    <div class="text-center">
+        <button type="button" class="btn btn-primary btn-lg">Previous</button>
+        <button type="button" class="btn btn-primary btn-lg">Next</button>
+    </div>
+</div>
+{% endblock content %}

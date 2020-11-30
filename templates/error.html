@@ -1,7 +1,6 @@
 {% extends "layout.html" %}
-
 {% block content %}
-    {% for msg in msgs %}
-        <p>Error: {{ msg }}</p>
-    {% endfor %}
+{% for msg in msgs %}
+<p>Error: {{ msg }}</p>
+{% endfor %}
 {% endblock content %}
