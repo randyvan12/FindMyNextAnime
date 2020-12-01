@@ -11,5 +11,5 @@ def login_required(f):
         user = dict(session).get('access_token', None)
         if user:
             return f(*args, **kwargs)
-        return render_template('user.html', username="no user", imgURL="", login=dict(session).get('access_token', None))
+        return render_template('error.html', title='Error', msgs=['Please login'], login=dict(session).get('access_token', None))
     return decorated_function
