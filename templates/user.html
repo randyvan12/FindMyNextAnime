@@ -1,5 +1,121 @@
 {% extends "layout.html" %}
 {% block  content %}
-<h1> {{ user_info['username'] }} </h1>
-<img src="{{ user_info['img_URL'] }}">
+<div class="container-fluid">
+    <div class="jumbotron">
+        <div class="row">
+            <img src="{{ user_info['img_URL'] }}">
+            <div class = "col-10"> 
+                <h1 class="display-4"> {{ user_info['username'] }} </h1>
+                <hr class="my-4">
+                <p> {{ user_info['about'] }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    table {
+      font-family: arial, sans-serif;
+      border-collapse: collapse;
+      width: 100%;
+    }
+    
+    td, th {
+      border: 1px solid #dddddd;
+      text-align: left;
+      padding: 8px;
+    }
+    
+    tr:nth-child(even) {
+      background-color: #e9ecef;
+    }
+</style>   
+<div class="container-fluid" style="font-size: 25px">
+    <!-- list_info[COMPLETED = 0, PLANNING = 1, DROPPED = 2, HOLD = 3, WATCHING = 4] -->
+    <h3> Watching </h3>
+    <table>
+        <tr>
+            <th class="col-11">Title</th>
+            <th class="col-1">Score</th>
+        </tr>
+        {% for anime in list_info[4] %}
+        <tr>
+            <td class="d-flex align-items-center">
+                <img style="float:left" src="{{ list_info[4][anime][1] }}">
+                <a href="{{url_for('anime_view', anime_id = list_info[4][anime][2]) }}" class="ml-5">{{ anime }}</a>
+            </td>
+            <td class="text-center">{{ list_info[4][anime][0] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h3>Completed</h3>
+    <table>
+        <tr>
+            <th class="col-11">Title</th>
+            <th class="col-1">Score</th>
+        </tr>
+        {% for anime in list_info[0] %}
+        <tr>
+            <td class="d-flex align-items-center">
+                <img style="float:left" src="{{ list_info[0][anime][1] }}">
+                <a href="{{url_for('anime_view', anime_id = list_info[0][anime][2]) }}" class="ml-5">{{ anime }}</a>
+            </td>
+            <td class="text-center">{{ list_info[0][anime][0] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    
+    <h3> Hold </h3>
+    <table>
+        <tr>
+            <th class="col-11">Title</th>
+            <th class="col-1">Score</th>
+        </tr>
+        {% for anime in list_info[3] %}
+        <tr>
+            <td class="d-flex align-items-center">
+                <img style="float:left" src="{{ list_info[3][anime][1] }}">
+                <a href="{{url_for('anime_view', anime_id = list_info[3][anime][2]) }}" class="ml-5">{{ anime }}</a>
+            </td>
+            <td class="text-center">{{ list_info[3][anime][0] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h3> Dropped </h3>
+    <table>
+        <tr>
+            <th class="col-11">Title</th>
+            <th class="col-1">Score</th>
+        </tr>
+        {% for anime in list_info[2] %}
+        <tr>
+            <td class="d-flex align-items-center">
+                <img style="float:left" src="{{ list_info[2][anime][1] }}">
+                <a href="{{url_for('anime_view', anime_id = list_info[2][anime][2]) }}" class="ml-5">{{ anime }}</a>
+            </td>
+            <td class="text-center">{{ list_info[2][anime][0] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h3>Planning</h3>
+    <table>
+        <tr>
+            <th class="col-11">Title</th>
+            <th class="col-1">Score</th>
+        </tr>
+        {% for anime in list_info[1] %}
+        <tr>
+            <td class="d-flex align-items-center">
+                <img style="float:left" src="{{ list_info[1][anime][1] }}">
+                <a href="{{url_for('anime_view', anime_id = list_info[1][anime][2]) }}" class="ml-5">{{ anime }}</a>
+            </td>
+            <td class="text-center">{{ list_info[1][anime][0] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+
 {% endblock content %}
