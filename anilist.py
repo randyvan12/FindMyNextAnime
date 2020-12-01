@@ -146,7 +146,7 @@ def anime_view():
                 id
                 episodes
                 averageScore
-                description
+                description(asHtml: true)
                 genres
                 format
                 status
@@ -206,7 +206,7 @@ def anime_view():
                 id
                 episodes
                 averageScore
-                description
+                description(asHtml: true)
                 genres
                 format
                 status
@@ -242,7 +242,7 @@ def anime_view():
     anime_info['id'] = response_data['id']
     anime_info['genres'] = response_data['genres']
     anime_info['format'] = response_data['format']
-    anime_info['status'] = response_data['status'].title()
+    anime_info['anime_status'] = response_data['status'].title()
     anime_info['season'] = response_data['season'].title() + ' ' + str(response_data['startDate']['year'])
     anime_info['source'] = response_data['source'].title()
 
