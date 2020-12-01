@@ -7,7 +7,7 @@
             <div class = "col-10"> 
                 <h1 class="display-4"> {{ anime_info['romaji'] }} </h1>
                 <hr class="my-4">
-                <p> {{ anime_info['description'] }}</p>
+                {{ anime_info['description']|safe }}
                 <div class="dropdown">
                     {% if inList %}
                     <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -54,7 +54,7 @@
             <h6> Score </h6>
             <p> {{ anime_info['score'] }} </p>
             <h6> Status </h6>
-            <p> {{ anime_info['status'] }} </p>
+            <p> {{ anime_info['anime_status'] }} </p>
             <h6> Start Date </h6>
             <p> {{ anime_info['start_date'] }} </p>
             <h6> End Date </h6>

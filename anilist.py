@@ -146,7 +146,7 @@ def anime_view():
                 id
                 episodes
                 averageScore
-                description
+                description(asHtml: true)
                 genres
                 format
                 status
@@ -206,7 +206,7 @@ def anime_view():
                 id
                 episodes
                 averageScore
-                description
+                description(asHtml: true)
                 genres
                 format
                 status
@@ -242,7 +242,7 @@ def anime_view():
     anime_info['id'] = response_data['id']
     anime_info['genres'] = response_data['genres']
     anime_info['format'] = response_data['format']
-    anime_info['status'] = response_data['status'].title()
+    anime_info['anime_status'] = response_data['status'].title()
     anime_info['season'] = response_data['season'].title() + ' ' + str(response_data['startDate']['year'])
     anime_info['source'] = response_data['source'].title()
 
@@ -353,18 +353,59 @@ def user_view():
                 large
             }
             id
+            about
         }
     }
     '''
     response = requests.post(url, headers=headers, json={"query": query}).json()
-
-    user_info = {}
     response_data = response['data']['Viewer']
+    #add to session cookie
+    session['userID'] = response_data['id']
+    session['username'] = response_data['name']
+
+    #gets information about the user from the query
+    user_info = {}
     user_info['username'] = response_data['name']
     user_info['img_URL'] = response_data['avatar']['large']
-    session['userID'] = response['data']['Viewer']['id']
-    print(session['userID'])
-    return render_template('user.html', user_info = user_info, login=dict(session).get('access_token', None))
+    user_info['about'] = response_data['about']
+    
+    #second query to get list
+    query = '''
+    query($id: Int){
+        MediaListCollection(userId: $id, type: ANIME, status_in: [COMPLETED, CURRENT, PLANNING, DROPPED, PAUSED]){
+            lists{
+                entries{
+                    media{
+                        title{
+                            romaji
+                        }
+                        coverImage{
+                            medium
+                        }
+                        id
+                    }
+                    score(format: POINT_10)
+                }
+            }
+        }
+    }
+    '''
+    variables = {
+        'id': session['userID']
+    }
+    response = requests.post(url, json={'query': query, 'variables': variables}).json()
+
+    list_info = []
+    for i in range(len(response['data']['MediaListCollection']['lists'])):
+        anime_list = response['data']['MediaListCollection']['lists'][i]['entries']
+
+        anime_info = {}
+        for anime in anime_list:
+            #ANIME NAME = (SCORE, IMAGE, ID)
+            anime_info[anime['media']['title']['romaji']] = (anime['score'], anime['media']['coverImage']['medium'], anime['media']['id'])
+        list_info.append(dict(sorted(anime_info.items(), key=lambda item: item[1], reverse=True)))
+    #COMPELTED = 0, PLANNING = 1, DROPPED = 2, HOLD = 3, DROPPED = 4
+    return render_template('user.html', user_info = user_info, list_info = list_info, login=dict(session).get('access_token', None))
 
 @app.route("/random")
 def random_anime():
