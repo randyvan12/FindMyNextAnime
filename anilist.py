@@ -409,60 +409,45 @@ def user_view():
 
 @app.route("/random")
 def random_anime():
-    anime_info = {}
-    while True:
-        randint = random.randint(0, 100000)
-        query = '''
-        query ($id: Int) {
-            Media (id: $id, type: ANIME) {
-                title{
-                    romaji
-                    english
-                }
-                coverImage{
-                    large
-                }
-                startDate{
-                    year
-                    month
-                    day
-                }
-                endDate{
-                    year
-                    month
-                    day
-                }
-                studios(isMain: true){
-                    nodes{
-                        name
-                    }
-                }
-                episodes
-                averageScore
+    url = 'https://graphql.anilist.co'
+    #first query to get the total number of anime
+    query ='''
+    query{
+        Page(perPage: 1){
+            pageInfo{
+                lastPage
+            }
+            media(type: ANIME){
+                id
             }
         }
-        '''
-        variables = {
-            'id': randint
+    }
+    '''
+    response = requests.post(url, json={'query': query}).json()
+    upper_bound = response['data']['Page']['pageInfo']['lastPage']
+    random_page = random.randint(1, upper_bound)
+
+    #second query to randomly get an anime id
+    query ='''
+    query($page: Int){
+        Page(perPage: 1 page: $page){
+                pageInfo{
+                    lastPage
+                }
+            media(type: ANIME){
+                id
+            }
         }
-        url = 'https://graphql.anilist.co'
-
-        response = requests.post(url, json={'query': query, 'variables': variables}).json()
-        try:
-            response_data = response['data']['Media']
-            anime_info['img_URL'] = response_data['coverImage']['large']
-            anime_info['romaji'] = response_data['title']['romaji']
-            anime_info['english'] = response_data['title']['english']
-            anime_info['start_date'] = str(response_data['startDate']['month']) + '/' + str(response_data['startDate']['day']) + '/' + str(response_data['startDate']['year'])
-            anime_info['end_date'] = str(response_data['endDate']['month']) + '/' + str(response_data['endDate']['day']) + '/' + str(response_data['endDate']['year'])
-            anime_info['episodes'] = response_data['episodes']
-            anime_info['score'] = response_data['averageScore']
-            anime_info['studio'] = response_data['studios']['nodes'][0]['name']
-            break
-        except:
-            continue
-    return render_template('anime.html', anime_info = anime_info, login=dict(session).get('access_token', None))
-
+    }
+    '''
+    variables = {
+        'page': random_page
+    }
+    response = requests.post(url, json={'query': query, 'variables': variables}).json()
+    print(response)
+    random_anime_id = response['data']['Page']['media'][0]['id']
+    redirect_url = url_for('anime_view', anime_id = random_anime_id)
+    return redirect(redirect_url)
 @app.route("/change")
 def change():
     if not dict(session).get('access_token', None):
