@@ -3,6 +3,7 @@ from string import Template
 from authlib.integrations.flask_client import OAuth
 import requests
 import json
+import numpy as np
 import random
 
 # for videos
@@ -34,31 +35,31 @@ anilist = oauth.register(
 )
 
 # Start webpage
-
-
 @app.route("/")
 def home_view():
     return render_template('home.html', title="Home", login=dict(session).get('access_token', None))
 
+# Search webpage
+@app.route("/search")
+def search_view():
+    return render_template('search.html', title="Search", login=dict(session).get('access_token', None))
+
 # About webpage
-
-
 @app.route("/about")
 def about_view():
     return render_template('about.html', title="About", login=dict(session).get('access_token', None))
-
 
 @app.route("/animeResults")
 def anime_results_view():
     anime_name = request.args.get('search')
     page_num = request.args.get('page')
     query = '''
-        query ($id: Int, $page: Int, $perPage: Int, $search: String) {
+        query ($page: Int, $perPage: Int, $search: String) {
             Page (page: $page, perPage: $perPage) {
                 pageInfo {
                     lastPage
                 }
-                media (id: $id, search: $search, type: ANIME) {
+                media (search: $search, type: ANIME) {
                     id
                     title {
                         romaji
@@ -304,8 +305,6 @@ def anime_view():
     return render_template('anime.html', anime_info = anime_info, inList = inList, login=dict(session).get('access_token', None))
 
 # login webpage
-
-
 @app.route('/login')
 def login():
     anilist = oauth.create_client('anilist')
@@ -313,8 +312,6 @@ def login():
     return anilist.authorize_redirect(redirect_uri)
 
 # safe redirect to authorize then redirects to another page
-
-
 @app.route('/authorize')
 def authorize():
     anilist = oauth.create_client('anilist')
@@ -325,16 +322,12 @@ def authorize():
     return redirect('/user')
 
 # gets rid of the session cookie
-
-
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect('/')
 
 # user webpage
-
-
 @app.route("/user")
 @login_required
 def user_view():
@@ -404,8 +397,117 @@ def user_view():
             #ANIME NAME = (SCORE, IMAGE, ID)
             anime_info[anime['media']['title']['romaji']] = (anime['score'], anime['media']['coverImage']['medium'], anime['media']['id'])
         list_info.append(dict(sorted(anime_info.items(), key=lambda item: item[1], reverse=True)))
-    #COMPELTED = 0, PLANNING = 1, DROPPED = 2, HOLD = 3, DROPPED = 4
+    #COMPLETED = 0, PLANNING = 1, DROPPED = 2, HOLD = 3, WATCHING = 4
     return render_template('user.html', user_info = user_info, list_info = list_info, login=dict(session).get('access_token', None))
+
+@app.route("/recommendation")
+def recommendation_view():
+    url = "https://graphql.anilist.co"
+
+    accessToken = session['access_token']
+
+    header = {
+        "Authorization": f"Bearer {accessToken}"
+    }
+
+    tag_query = '''
+    query{
+        MediaTagCollection{
+            name
+        }
+    }
+    '''
+    tag_response = requests.post(url, json={'query': tag_query}).json()
+
+    tag_list = []
+    for dic in tag_response['data']['MediaTagCollection']:
+        tag_list.append(dic['name'])
+
+    tag_map = {k: v for v, k in enumerate(tag_list)}
+
+    user_query = '''
+    query($id: Int){
+        MediaListCollection(userId: $id, type: ANIME, status_in: [COMPLETED]){
+            lists{
+                entries{
+                    score
+                    media{
+                        title{
+                            romaji
+                        }
+                        tags{
+                            name
+                            rank
+                        }
+                    }
+                }
+            }
+        }
+    }
+    '''
+
+    unseen_query = '''
+    query($page: Int){
+        Page(perPage: 50 page: $page){
+                pageInfo{
+                    lastPage
+                }
+            media(onList: false, type: ANIME, isAdult: false, format_in: [TV, MOVIE, ONA], status_in: [FINISHED, RELEASING], 
+            startDate_greater: 19800101, popularity_greater: 10000, averageScore_greater: 60){
+                id
+                title{
+                    romaji
+                }
+                coverImage{
+                    medium
+                }
+                tags{
+                    name
+                    rank
+                }
+            }
+        }
+    }
+    '''
+    user_variables = {
+        'id': session['userID']
+    }
+
+    user_response = requests.post(url, json={'query': user_query, 'variables': user_variables}).json()
+    anime_list = user_response['data']['MediaListCollection']['lists'][0]['entries']
+
+    weights = [0] * len(tag_list)
+    for anime in anime_list:
+        for tag in anime['media']['tags']:
+            weights[tag_map[tag['name']]] += anime['score'] * tag['rank']
+
+    unseen_list = []
+    for i in range(1, 30):
+        unseen_variables = {
+            'page': i
+        }
+        unseen_response = requests.post(url, headers = header, json = {'query': unseen_query, 'variables': unseen_variables}).json()
+        unseen_list += unseen_response['data']['Page']['media']
+
+    scores = []
+    for anime in unseen_list:
+        score = 0
+        for tag in anime['tags']:
+            score += weights[tag_map[tag['name']]] * tag['rank']
+        scores.append(score * -1)
+
+    rankings = np.argsort(scores)
+    rankings = rankings[:50]
+    recommendation_list = []
+
+    for index in rankings:
+        anime_info = {}
+        anime_info['id'] = unseen_list[index]['id']
+        anime_info['img_URL'] = unseen_list[index]['coverImage']['medium']
+        anime_info['romaji'] = unseen_list[index]['title']['romaji']
+        recommendation_list.append(anime_info)
+
+    return render_template('recommendations.html', recommendation_list=recommendation_list, title="Recommendations", login=dict(session).get('access_token', None))
 
 @app.route("/random")
 def random_anime():
@@ -448,6 +550,7 @@ def random_anime():
     random_anime_id = response['data']['Page']['media'][0]['id']
     redirect_url = url_for('anime_view', anime_id = random_anime_id)
     return redirect(redirect_url)
+
 @app.route("/change")
 def change():
     if not dict(session).get('access_token', None):
@@ -489,5 +592,6 @@ def change():
     requests.post(url, headers=headers, json={'query': query, 'variables': variables})
     redirect_url = url_for('anime_view', anime_id = anime_id)
     return redirect(redirect_url)
+    
 if __name__ == "__main__":
     app.run(debug=True)
