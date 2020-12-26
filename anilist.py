@@ -3,6 +3,7 @@ from string import Template
 from authlib.integrations.flask_client import OAuth
 import requests
 import json
+import numpy as np
 
 #for auth
 import os
@@ -156,14 +157,41 @@ def user_view():
 @app.route("/recommendation")
 def recommendation():
     url = "https://graphql.anilist.co"
-    query = '''
+
+    accessToken = session['access_token']
+
+    header = {
+        "Authorization": f"Bearer {accessToken}"
+    }
+
+    tag_query = '''
+    query{
+        MediaTagCollection{
+            name
+        }
+    }
+    '''
+    tag_response = requests.post(url, json={'query': tag_query}).json()
+
+    tag_list = []
+    for dic in tag_response['data']['MediaTagCollection']:
+        tag_list.append(dic['name'])
+
+    tag_map = {k: v for v, k in enumerate(tag_list)}
+
+    user_query = '''
     query($id: Int){
         MediaListCollection(userId: $id, type: ANIME, status_in: [COMPLETED]){
             lists{
                 entries{
+                    score
                     media{
                         title{
-                            native
+                            romaji
+                        }
+                        tags{
+                            name
+                            rank
                         }
                     }
                 }
@@ -171,14 +199,61 @@ def recommendation():
         }
     }
     '''
-    variables = {
+
+    unseen_query = '''
+    query($page: Int){
+        Page(perPage: 50 page: $page){
+                pageInfo{
+                    lastPage
+                }
+            media(onList: false, type: ANIME, isAdult: false, format_in: [TV, MOVIE, ONA], status_in: [FINISHED, RELEASING], 
+            startDate_greater: 19800101, popularity_greater: 10000, averageScore_greater: 60){
+                title{
+                    romaji
+                }
+                tags{
+                    name
+                    rank
+                }
+            }
+        }
+    }
+    '''
+    user_variables = {
         'id': session['userID']
     }
 
-    response2 = requests.post(url, json={'query': query, 'variables': variables}).json()
-    anime_list = response2['data']['MediaListCollection']['lists'][0]['entries']
+    user_response = requests.post(url, json={'query': user_query, 'variables': user_variables}).json()
+    anime_list = user_response['data']['MediaListCollection']['lists'][0]['entries']
+
+    weights = [0] * len(tag_list)
     for anime in anime_list:
-        print(anime['media']['title']['native'])
+        for tag in anime['media']['tags']:
+            weights[tag_map[tag['name']]] += anime['score'] * tag['rank']
+
+    for i in range(len(tag_list)):
+        print(tag_list[i] + " has weight " + str(weights[i]))
+
+    unseen_list = []
+    for i in range(1, 30):
+        unseen_variables = {
+            'page': i
+        }
+        unseen_response = requests.post(url, headers = header, json = {'query': unseen_query, 'variables': unseen_variables}).json()
+        unseen_list += unseen_response['data']['Page']['media']
+
+    scores = []
+    for anime in unseen_list:
+        score = 0
+        for tag in anime['tags']:
+            score += weights[tag_map[tag['name']]] * tag['rank']
+        scores.append(score)
+
+    rankings = np.argsort(scores)
+
+    for index in rankings:
+        print(unseen_list[index]['title']['romaji'] + " scored " + str(scores[index]))
+
     return render_template('home.html', title="Home", login=dict(session).get('access_token', None))
 
 if __name__ == "__main__":
