@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+{% block  content %}
+{% if n != 0 %}
+<table class="table table-dark table-striped m-0">
+    {% for i in range(recommendation_list|length) %}
+    <tr>
+        <td>
+            <img src="{{recommendation_list[i]['img_URL']}}" class="img-thumbnail bg-dark border-0">
+        </td>
+        <td>
+            <h2 style="padding-top: 3%;">
+                <a href="{{url_for('anime_view', anime_id = recommendation_list[i]['id']) }}">{{recommendation_list[i]['romaji']}}</a>
+            </h2>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<div>
+    <p>Error: No Results</p>
+</div>
+{% endif %}
+{% endblock content %}
