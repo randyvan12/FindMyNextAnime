@@ -379,6 +379,7 @@ def user_view():
                     }
                     score(format: POINT_10)
                 }
+                status
             }
         }
     }
@@ -388,7 +389,9 @@ def user_view():
     }
     response = requests.post(url, json={'query': query, 'variables': variables}).json()
 
-    list_info = []
+    print(response['data'])
+
+    list_info = {}
     for i in range(len(response['data']['MediaListCollection']['lists'])):
         anime_list = response['data']['MediaListCollection']['lists'][i]['entries']
 
@@ -396,8 +399,10 @@ def user_view():
         for anime in anime_list:
             #ANIME NAME = (SCORE, IMAGE, ID)
             anime_info[anime['media']['title']['romaji']] = (anime['score'], anime['media']['coverImage']['medium'], anime['media']['id'])
-        list_info.append(dict(sorted(anime_info.items(), key=lambda item: item[1], reverse=True)))
-    #COMPLETED = 0, PLANNING = 1, DROPPED = 2, HOLD = 3, WATCHING = 4
+
+        list_info[response['data']['MediaListCollection']['lists'][i]['status']] = dict(sorted(anime_info.items(), 
+        key=lambda item: item[1], reverse=True))
+
     return render_template('user.html', user_info = user_info, list_info = list_info, login=dict(session).get('access_token', None))
 
 @app.route("/recommendation")
