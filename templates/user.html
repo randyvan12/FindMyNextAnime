@@ -20,13 +20,14 @@
     }
     
     td, th {
-      border: 1px solid #dddddd;
+      border: 1px solid black;
       text-align: left;
       padding: 8px;
     }
     
     tr:nth-child(even) {
-      background-color: #e9ecef;
+      background-color: #343a40;
+      border: 1px solid black;
     }
 </style>   
 <div class="container-fluid" style="font-size: 25px">
@@ -37,13 +38,13 @@
             <th class="col-11">Title</th>
             <th class="col-1">Score</th>
         </tr>
-        {% for anime in list_info[4] %}
+        {% for anime in list_info['CURRENT'] %}
         <tr>
             <td class="d-flex align-items-center">
-                <img style="float:left" src="{{ list_info[4][anime][1] }}">
-                <a href="{{url_for('anime_view', anime_id = list_info[4][anime][2]) }}" class="ml-5">{{ anime }}</a>
+                <img style="float:left" src="{{ list_info['CURRENT'][anime][1] }}">
+                <a href="{{url_for('anime_view', anime_id = list_info['CURRENT'][anime][2]) }}" class="ml-5">{{ anime }}</a>
             </td>
-            <td class="text-center">{{ list_info[4][anime][0] }}</td>
+            <td class="text-center">{{ list_info['CURRENT'][anime][0] }}</td>
         </tr>
         {% endfor %}
     </table>
@@ -54,13 +55,13 @@
             <th class="col-11">Title</th>
             <th class="col-1">Score</th>
         </tr>
-        {% for anime in list_info[0] %}
+        {% for anime in list_info['COMPLETED'] %}
         <tr>
             <td class="d-flex align-items-center">
-                <img style="float:left" src="{{ list_info[0][anime][1] }}">
-                <a href="{{url_for('anime_view', anime_id = list_info[0][anime][2]) }}" class="ml-5">{{ anime }}</a>
+                <img style="float:left" src="{{ list_info['COMPLETED'][anime][1] }}">
+                <a href="{{url_for('anime_view', anime_id = list_info['COMPLETED'][anime][2]) }}" class="ml-5">{{ anime }}</a>
             </td>
-            <td class="text-center">{{ list_info[0][anime][0] }}</td>
+            <td class="text-center">{{ list_info['COMPLETED'][anime][0] }}</td>
         </tr>
         {% endfor %}
     </table>
@@ -71,13 +72,13 @@
             <th class="col-11">Title</th>
             <th class="col-1">Score</th>
         </tr>
-        {% for anime in list_info[3] %}
+        {% for anime in list_info['PAUSED'] %}
         <tr>
             <td class="d-flex align-items-center">
-                <img style="float:left" src="{{ list_info[3][anime][1] }}">
-                <a href="{{url_for('anime_view', anime_id = list_info[3][anime][2]) }}" class="ml-5">{{ anime }}</a>
+                <img style="float:left" src="{{ list_info['PAUSED'][anime][1] }}">
+                <a href="{{url_for('anime_view', anime_id = list_info['PAUSED'][anime][2]) }}" class="ml-5">{{ anime }}</a>
             </td>
-            <td class="text-center">{{ list_info[3][anime][0] }}</td>
+            <td class="text-center">{{ list_info['PAUSED'][anime][0] }}</td>
         </tr>
         {% endfor %}
     </table>
@@ -88,13 +89,13 @@
             <th class="col-11">Title</th>
             <th class="col-1">Score</th>
         </tr>
-        {% for anime in list_info[2] %}
+        {% for anime in list_info['DROPPED'] %}
         <tr>
             <td class="d-flex align-items-center">
-                <img style="float:left" src="{{ list_info[2][anime][1] }}">
-                <a href="{{url_for('anime_view', anime_id = list_info[2][anime][2]) }}" class="ml-5">{{ anime }}</a>
+                <img style="float:left" src="{{ list_info['DROPPED'][anime][1] }}">
+                <a href="{{url_for('anime_view', anime_id = list_info['DROPPED'][anime][2]) }}" class="ml-5">{{ anime }}</a>
             </td>
-            <td class="text-center">{{ list_info[2][anime][0] }}</td>
+            <td class="text-center">{{ list_info['DROPPED'][anime][0] }}</td>
         </tr>
         {% endfor %}
     </table>
@@ -105,13 +106,13 @@
             <th class="col-11">Title</th>
             <th class="col-1">Score</th>
         </tr>
-        {% for anime in list_info[1] %}
+        {% for anime in list_info['PLANNING'] %}
         <tr>
             <td class="d-flex align-items-center">
-                <img style="float:left" src="{{ list_info[1][anime][1] }}">
-                <a href="{{url_for('anime_view', anime_id = list_info[1][anime][2]) }}" class="ml-5">{{ anime }}</a>
+                <img style="float:left" src="{{ list_info['PLANNING'][anime][1] }}">
+                <a href="{{url_for('anime_view', anime_id = list_info['PLANNING'][anime][2]) }}" class="ml-5">{{ anime }}</a>
             </td>
-            <td class="text-center">{{ list_info[1][anime][0] }}</td>
+            <td class="text-center">{{ list_info['PLANNING'][anime][0] }}</td>
         </tr>
         {% endfor %}
     </table>

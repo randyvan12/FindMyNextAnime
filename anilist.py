@@ -15,7 +15,7 @@ from datetime import timedelta
 from auth_decorator import login_required
 
 # the app
-app = Flask(__name__)
+application = app = Flask(__name__)
 # Session config
 app.secret_key = "739b8f5167d69c5ded99a055d73c52ac"
 app.config['SESSION_COOKIE_NAME'] = 'anilist-login-session'
@@ -33,7 +33,6 @@ anilist = oauth.register(
     authorize_params=None,
     api_base_url='https://anilist.co/api/v2/oauth/',
 )
-
 # Start webpage
 @app.route("/")
 def home_view():
@@ -379,6 +378,7 @@ def user_view():
                     }
                     score(format: POINT_10)
                 }
+                status
             }
         }
     }
@@ -388,7 +388,9 @@ def user_view():
     }
     response = requests.post(url, json={'query': query, 'variables': variables}).json()
 
-    list_info = []
+    print(response['data'])
+
+    list_info = {}
     for i in range(len(response['data']['MediaListCollection']['lists'])):
         anime_list = response['data']['MediaListCollection']['lists'][i]['entries']
 
@@ -396,12 +398,16 @@ def user_view():
         for anime in anime_list:
             #ANIME NAME = (SCORE, IMAGE, ID)
             anime_info[anime['media']['title']['romaji']] = (anime['score'], anime['media']['coverImage']['medium'], anime['media']['id'])
-        list_info.append(dict(sorted(anime_info.items(), key=lambda item: item[1], reverse=True)))
-    #COMPLETED = 0, PLANNING = 1, DROPPED = 2, HOLD = 3, WATCHING = 4
-    return render_template('user.html', user_info = user_info, list_info = list_info, login=dict(session).get('access_token', None))
 
+        list_info[response['data']['MediaListCollection']['lists'][i]['status']] = dict(sorted(anime_info.items(), 
+        key=lambda item: item[1], reverse=True))
+
+    return render_template('user.html', user_info = user_info, list_info = list_info, login=dict(session).get('access_token', None))
 @app.route("/recommendation")
 def recommendation_view():
+    if not dict(session).get('access_token', None):
+        return redirect('/login')
+    
     url = "https://graphql.anilist.co"
 
     accessToken = session['access_token']
@@ -554,7 +560,7 @@ def random_anime():
 @app.route("/change")
 def change():
     if not dict(session).get('access_token', None):
-        return render_template('error.html', title='Error', msgs=['Please login'], login=dict(session).get('access_token', None))
+        return redirect('/login')
 
     anime_id = request.args.get('anime_id')
     media_action = request.args.get('change')
