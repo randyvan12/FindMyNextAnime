@@ -1,5 +1,60 @@
 {% extends "layout.html" %}
 {% block  content %}
 <!-- Add how to use website then add our life story and donation page -->
-<h1>Made by Randy Nguyen and Tarun Maddineni using the AniList API</h1>
+<style>
+    .about-section {
+        padding: 50px;
+        text-align: center;
+        background-color: #474e5d;
+    }    
+    .card {
+        background-color: #474e5d;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+        margin: 8px;    
+    }
+</style>
+
+<div class="about-section">
+    <h1>How to use FindMyNextAnime.com</h1>
+    <p>Not sure what you should watch next?</p>
+    <p>Just login through AniList and click the Find My Next Anime button on the homepage. It will curate a list depending on your list!</p>
+</div>
+
+<h2 style="text-align:center">Made by Randy Nguyen and Tarun Maddineni using the AniList API</h2>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="row">
+            <div class="column" style="text-align: center">
+                <div class="card">
+                    <div class="container" style="padding-bottom: 20px">
+                        <h2>Randy Nguyen</h2>
+                        <p>College student that enjoys coding, games, and anime.</p>
+                        <p>Email: randyvan12@gmail.com</p>
+                        <p><a href="https://www.linkedin.com/in/randyvan12/">Linkedin</a></p>
+                        <a class="btn btn-primary" href="https://anilist.co/user/Rynk/" role="button" style="background-color: #6c757d; width: 100%; color: black; border: none">AniList List</a>
+                    </div>
+                </div>
+            </div>
+            <div class="column" style="text-align: center">
+                <div class="card">
+                    <div class="container" style="padding-bottom: 20px">
+                        <h2>Tarun Maddineni</h2>
+                        <p>Some text that describes me lorem ipsum ipsum lorem.</p>
+                        <p>tarun.maddieni@yahoo.com</p>
+                        <p>add more links if needed like linkedin</p>
+                        <a class="btn btn-primary" href="https://anilist.co/user/tmadd18/" role="button" style="background-color: #6c757d; width: 100%; color: black; border: none">AniList List</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container">
+    <div class="row justify-content-center">
+        <span onClick="window.location='https://github.com/randyvan12/AniList'"style="width: 200px; height: 200px; cursor: pointer;"class="iconify" data-icon="mdi-github" data-inline="false"></span>
+    </div>
+    <div class="row justify-content-center">
+        <h3><a href="https://github.com/randyvan12/AniList" style="text-decoration: none; color: black ">GitHub</a></h3>
+    </div>
+</div>
 {% endblock content %}
