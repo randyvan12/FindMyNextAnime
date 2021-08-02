@@ -229,23 +229,32 @@ def anime_view():
     #retrieval of information for the first column
     anime_info = {}
     response_data = response['data']['Media']
-
-    anime_info['img_URL'] = response_data['coverImage']['large']
-    anime_info['romaji'] = response_data['title']['romaji']
-    anime_info['english'] = response_data['title']['english']
-    anime_info['start_date'] = str(response_data['startDate']['month']) + '/' + str(response_data['startDate']['day']) + '/' + str(response_data['startDate']['year'])
-    anime_info['end_date'] = str(response_data['endDate']['month']) + '/' + str(response_data['endDate']['day']) + '/' + str(response_data['endDate']['year'])
-    anime_info['episodes'] = response_data['episodes']
-    anime_info['score'] = response_data['averageScore']
-    anime_info['studio'] = response_data['studios']['nodes'][0]['name']
-    anime_info['description'] = response_data['description']
-    anime_info['id'] = response_data['id']
-    anime_info['genres'] = response_data['genres']
-    anime_info['format'] = response_data['format']
-    anime_info['anime_status'] = response_data['status'].title()
-    anime_info['season'] = response_data['season'].title() + ' ' + str(response_data['startDate']['year'])
-    anime_info['source'] = response_data['source'].title()
-
+    print(response)
+    try: 
+        anime_info['source'] = response_data['source'].title()
+    except AttributeError:
+        anime_info['source'] = None
+    try:
+        anime_info['season'] = response_data['season'].title() + ' ' + str(response_data['startDate']['year'])
+        anime_info['studio'] = response_data['studios']['nodes'][0]['name']
+    except AttributeError:
+        anime_info['season'] = None
+    except IndexError:
+        anime_info['studio'] = None
+    finally:
+        anime_info['img_URL'] = response_data['coverImage']['large']
+        anime_info['romaji'] = response_data['title']['romaji']
+        anime_info['english'] = response_data['title']['english']
+        anime_info['start_date'] = str(response_data['startDate']['month']) + '/' + str(response_data['startDate']['day']) + '/' + str(response_data['startDate']['year'])
+        anime_info['end_date'] = str(response_data['endDate']['month']) + '/' + str(response_data['endDate']['day']) + '/' + str(response_data['endDate']['year'])
+        anime_info['episodes'] = response_data['episodes']
+        anime_info['score'] = response_data['averageScore']
+        anime_info['description'] = response_data['description']
+        anime_info['id'] = response_data['id']
+        anime_info['genres'] = response_data['genres']
+        anime_info['format'] = response_data['format']
+        anime_info['anime_status'] = response_data['status'].title()
+    #Use while try and catch if catch knows what line is bad
     # NEED TO FIX IF THE QUERY RETURNS NULL ON DICTONARY KEYS
     # THIS IS AN EXAMPLE BUT DOES NOT FIX ALL
     # for key in anime_info.keys():
@@ -281,16 +290,29 @@ def anime_view():
         anime_info['media_list_id'] = response['data']['MediaList']['id']
     
     #Gets the OP/ED videos for the second column
+    try:
+        op_search_keyword = "official+" + anime_info['english'].replace(" ", "+") + "+opening"
+        html = urllib.request.urlopen("https://www.youtube.com/results?search_query=" + op_search_keyword)
+        video_ids = re.findall(r"watch\?v=(\S{11})", html.read().decode())
+        anime_info['OP'] = "https://www.youtube.com/embed/" + video_ids[0]
 
-    op_search_keyword = "official+" + anime_info['english'].replace(" ", "+") + "+opening"
-    html = urllib.request.urlopen("https://www.youtube.com/results?search_query=" + op_search_keyword)
-    video_ids = re.findall(r"watch\?v=(\S{11})", html.read().decode())
-    anime_info['OP'] = "https://www.youtube.com/embed/" + video_ids[0]
+        ed_search_keyword = "official+" +anime_info['english'].replace(" ", "+") + "+ending"
+        html = urllib.request.urlopen("https://www.youtube.com/results?search_query=" + ed_search_keyword)
+        video_ids = re.findall(r"watch\?v=(\S{11})", html.read().decode())
+        anime_info['ED'] = "https://www.youtube.com/embed/" + video_ids[0]
+    except AttributeError:
+        op_search_keyword = "official+" + anime_info['romaji'].replace(" ", "+") + "+opening"
+        html = urllib.request.urlopen("https://www.youtube.com/results?search_query=" + op_search_keyword)
+        video_ids = re.findall(r"watch\?v=(\S{11})", html.read().decode())
+        anime_info['OP'] = "https://www.youtube.com/embed/" + video_ids[0]
 
-    ed_search_keyword = "official+" +anime_info['english'].replace(" ", "+") + "+ending"
-    html = urllib.request.urlopen("https://www.youtube.com/results?search_query=" + ed_search_keyword)
-    video_ids = re.findall(r"watch\?v=(\S{11})", html.read().decode())
-    anime_info['ED'] = "https://www.youtube.com/embed/" + video_ids[0]
+        ed_search_keyword = "official+" +anime_info['romaji'].replace(" ", "+") + "+ending"
+        html = urllib.request.urlopen("https://www.youtube.com/results?search_query=" + ed_search_keyword)
+        video_ids = re.findall(r"watch\?v=(\S{11})", html.read().decode())
+        anime_info['ED'] = "https://www.youtube.com/embed/" + video_ids[0]
+    except UnicodeEncodeError:
+        anime_info['OP'] = "https://www.youtube.com/embed/dQw4w9WgXcQ"
+        anime_info['ED'] = "https://www.youtube.com/embed/dQw4w9WgXcQ"
 
     #Gets actors and character for the third column
     character_images = []
