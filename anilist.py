@@ -464,10 +464,6 @@ def recommendation_view():
         format_list = [sub.replace(' ', '_') for sub in format_list]
     else:
         format_list = ['TV', 'MOVIE', 'ONA']
-    print(genre_list)
-    print(year_filter)
-    print(score_filter)
-    print(format_list)
     # check if they are logged in
     if not dict(session).get('access_token', None):
         return redirect('/login')
