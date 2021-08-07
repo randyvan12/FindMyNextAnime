@@ -39,32 +39,64 @@
 <div class="container-fluid">
     <div class="row" style="background-color:#e9ecef">
         <span class="border border-dark rounded col-4 p-3">
+            {% if anime_info['format'] is not none %}
             <h6> Format </h6>
             <p> {{ anime_info['format'] }}</p>
+            {% endif %}
+
+            {% if anime_info['episodes'] is not none %}
             <h6> Episodes </h6>
             <p> {{ anime_info['episodes'] }} </p>
+            {% endif %}
+
+            {% if anime_info['studio'] is not none %}
             <h6> Studio </h6>
             <p> {{ anime_info['studio'] }} </p>
+            {% endif %}
+
+            {% if anime_info['genres'] is not none %}
             <h6> Genres </h6>
             <p> 
                 {% for genres in anime_info['genres'] %}
                 {{genres}}{{ ", " if not loop.last }}
                 {% endfor %}
             </p>
+            {% endif %}
+
+            {% if anime_info['score'] is not none %}
             <h6> Score </h6>
             <p> {{ anime_info['score'] }} </p>
+            {% endif %}
+
+            {% if anime_info['anime_status'] is not none %}
             <h6> Status </h6>
             <p> {{ anime_info['anime_status'] }} </p>
+            {% endif %}
+
+            {% if anime_info['start_date'] is not none %}
             <h6> Start Date </h6>
             <p> {{ anime_info['start_date'] }} </p>
+            {% endif %}
+
+            {% if anime_info['end_date'] is not none %}
             <h6> End Date </h6>
             <p> {{ anime_info['end_date'] }} </p>
+            {% endif %}
+
+            {% if anime_info['season'] is not none %}
             <h6> Season </h6>
             <p> {{ anime_info['season'] }} </p>
+            {% endif %}
+
+            {% if anime_info['source'] is not none %}
             <h6> Source </h6>
             <p> {{ anime_info['source'] }} </p>
+            {% endif %}
+            
+            {% if anime_info['english'] is not none %}
             <h6> Other Names </h6>
             <p> {{ anime_info['english'] }} </p>
+            {% endif %}
         </span>
         <span class="border border-dark rounded col-4 p-3">
             <h6>Opening</h6>
