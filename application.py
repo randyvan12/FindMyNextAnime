@@ -36,7 +36,16 @@ anilist = oauth.register(
 # Start webpage
 @app.route("/")
 def home_view():
-    return render_template('home.html', title="Home", login=dict(session).get('access_token', None))
+    url = "https://graphql.anilist.co"
+    query = '''
+        query{
+            GenreCollection
+        }
+    '''
+    response = requests.post(url, json={"query": query}).json()
+    genre_list = response['data']['GenreCollection']
+    format_list = ['TV', 'Movie', 'TV Short', 'Special', 'OVA', 'ONA', 'Music']
+    return render_template('home.html', genre_list = genre_list, format_list = format_list, title="Home", login=dict(session).get('access_token', None))
 
 # Search webpage
 @app.route("/search")
@@ -229,7 +238,6 @@ def anime_view():
     #retrieval of information for the first column
     anime_info = {}
     response_data = response['data']['Media']
-    print(response)
     try: 
         anime_info['source'] = response_data['source'].title()
     except AttributeError:
@@ -252,7 +260,7 @@ def anime_view():
         anime_info['description'] = response_data['description']
         anime_info['id'] = response_data['id']
         anime_info['genres'] = response_data['genres']
-        anime_info['format'] = response_data['format']
+        anime_info['format'] = response_data['format'].title()
         anime_info['anime_status'] = response_data['status'].title()
     #Use while try and catch if catch knows what line is bad
     # NEED TO FIX IF THE QUERY RETURNS NULL ON DICTONARY KEYS
@@ -290,29 +298,38 @@ def anime_view():
         anime_info['media_list_id'] = response['data']['MediaList']['id']
     
     #Gets the OP/ED videos for the second column
+    
     try:
-        op_search_keyword = "official+" + anime_info['english'].replace(" ", "+") + "+opening"
+        #gets rid of unicode
+        string_encode = anime_info['english'].replace(" ", "+").encode("ascii", "ignore")
+        string_decode = string_encode.decode()
+
+        op_search_keyword = "official+" + string_decode + "+opening"
         html = urllib.request.urlopen("https://www.youtube.com/results?search_query=" + op_search_keyword)
         video_ids = re.findall(r"watch\?v=(\S{11})", html.read().decode())
         anime_info['OP'] = "https://www.youtube.com/embed/" + video_ids[0]
 
-        ed_search_keyword = "official+" +anime_info['english'].replace(" ", "+") + "+ending"
+        ed_search_keyword = "official+" + string_decode + "+ending"
         html = urllib.request.urlopen("https://www.youtube.com/results?search_query=" + ed_search_keyword)
         video_ids = re.findall(r"watch\?v=(\S{11})", html.read().decode())
         anime_info['ED'] = "https://www.youtube.com/embed/" + video_ids[0]
     except AttributeError:
-        op_search_keyword = "official+" + anime_info['romaji'].replace(" ", "+") + "+opening"
+        # gets rid of unicode
+        string_encode = anime_info['romaji'].replace(" ", "+").encode("ascii", "ignore")
+        string_decode = string_encode.decode()
+
+        op_search_keyword = "official+" + string_decode + "+opening"
         html = urllib.request.urlopen("https://www.youtube.com/results?search_query=" + op_search_keyword)
         video_ids = re.findall(r"watch\?v=(\S{11})", html.read().decode())
         anime_info['OP'] = "https://www.youtube.com/embed/" + video_ids[0]
 
-        ed_search_keyword = "official+" +anime_info['romaji'].replace(" ", "+") + "+ending"
+        ed_search_keyword = "official+" + string_decode + "+ending"
         html = urllib.request.urlopen("https://www.youtube.com/results?search_query=" + ed_search_keyword)
         video_ids = re.findall(r"watch\?v=(\S{11})", html.read().decode())
         anime_info['ED'] = "https://www.youtube.com/embed/" + video_ids[0]
-    except UnicodeEncodeError:
-        anime_info['OP'] = "https://www.youtube.com/embed/dQw4w9WgXcQ"
-        anime_info['ED'] = "https://www.youtube.com/embed/dQw4w9WgXcQ"
+    # except UnicodeEncodeError:
+    #     anime_info['OP'] = "https://www.youtube.com/embed/dQw4w9WgXcQ"
+    #     anime_info['ED'] = "https://www.youtube.com/embed/dQw4w9WgXcQ"
 
     #Gets actors and character for the third column
     character_images = []
@@ -410,7 +427,6 @@ def user_view():
     }
     response = requests.post(url, json={'query': query, 'variables': variables}).json()
 
-    print(response['data'])
 
     list_info = {}
     for i in range(len(response['data']['MediaListCollection']['lists'])):
@@ -425,11 +441,42 @@ def user_view():
         key=lambda item: item[1], reverse=True))
 
     return render_template('user.html', user_info = user_info, list_info = list_info, login=dict(session).get('access_token', None))
+
 @app.route("/recommendation")
 def recommendation_view():
+    genre_list = request.args.getlist('genre_list')
+    if not bool(genre_list):
+        genre_list = None
+    year_filter = request.args.get('year')
+    if year_filter:
+        year_filter = year_filter + '0101'
+    else:
+        year_filter = 19800101
+
+    score_filter = request.args.get('score')
+    if score_filter:
+        score_filter = score_filter + '0'
+    else:
+        score_filter = 60
+
+    format_list = request.args.getlist('format_list')
+    if bool(format_list):
+        format_list = [sub.replace(' ', '_') for sub in format_list]
+    else:
+        format_list = ['TV', 'MOVIE', 'ONA']
+    print(genre_list)
+    print(year_filter)
+    print(score_filter)
+    print(format_list)
+    # check if they are logged in
     if not dict(session).get('access_token', None):
         return redirect('/login')
-    
+
+    # check if there is a list already compiled
+    # if (dict(session).get('recommendation_list', None)):
+    #     recommendation_list = session['recommendation_list']
+    #     return render_template('recommendations.html', recommendation_list = recommendation_list, title="Recommendations", login=dict(session).get('access_token', None))
+        
     url = "https://graphql.anilist.co"
 
     accessToken = session['access_token']
@@ -475,13 +522,13 @@ def recommendation_view():
     '''
 
     unseen_query = '''
-    query($page: Int){
+    query($page: Int, $year_filter: FuzzyDateInt, $score_filter: Int, $format_list: [MediaFormat], $genre_list: [String]){
         Page(perPage: 50 page: $page){
                 pageInfo{
                     lastPage
                 }
-            media(onList: false, type: ANIME, isAdult: false, format_in: [TV, MOVIE, ONA], status_in: [FINISHED, RELEASING], 
-            startDate_greater: 19800101, popularity_greater: 10000, averageScore_greater: 60){
+            media(onList: false, type: ANIME, isAdult: false, format_in: $format_list, status_in: [FINISHED, RELEASING], 
+            startDate_greater: $year_filter, popularity_greater: 10000, averageScore_greater: $score_filter, genre_in: $genre_list){
                 id
                 title{
                     romaji
@@ -499,6 +546,7 @@ def recommendation_view():
     '''
     user_variables = {
         'id': session['userID']
+        # genre, score, year, on friends list, format, 
     }
 
     user_response = requests.post(url, json={'query': user_query, 'variables': user_variables}).json()
@@ -512,9 +560,15 @@ def recommendation_view():
     unseen_list = []
     for i in range(1, 30):
         unseen_variables = {
-            'page': i
+            'page': i,
+            'year_filter': year_filter,
+            'score_filter': score_filter,
+            'format_list': format_list,
+            'genre_list': genre_list
         }
         unseen_response = requests.post(url, headers = header, json = {'query': unseen_query, 'variables': unseen_variables}).json()
+        if not bool(unseen_response['data']['Page']['media']):
+            break
         unseen_list += unseen_response['data']['Page']['media']
 
     scores = []
@@ -534,8 +588,8 @@ def recommendation_view():
         anime_info['img_URL'] = unseen_list[index]['coverImage']['medium']
         anime_info['romaji'] = unseen_list[index]['title']['romaji']
         recommendation_list.append(anime_info)
-
-    return render_template('recommendations.html', recommendation_list=recommendation_list, title="Recommendations", login=dict(session).get('access_token', None))
+    # session['recommendation_list'] = recommendation_list
+    return render_template('recommendations.html', recommendation_list = recommendation_list, title="Recommendations", login=dict(session).get('access_token', None))
 
 @app.route("/random")
 def random_anime():
@@ -574,7 +628,6 @@ def random_anime():
         'page': random_page
     }
     response = requests.post(url, json={'query': query, 'variables': variables}).json()
-    print(response)
     random_anime_id = response['data']['Page']['media'][0]['id']
     redirect_url = url_for('anime_view', anime_id = random_anime_id)
     return redirect(redirect_url)

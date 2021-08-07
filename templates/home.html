@@ -1,10 +1,59 @@
 {% extends "layout.html" %}
 {% block content %}
+<script>
+    function loadRecommendation(){
+        $("#home-content").hide();
+        $("#loader").show();
+    }
+</script>
 <div class="container">
     <div class="col text-center" style="padding-top: 30%;">
-        <h1>Don't Know What To Watch?</h1>
-        <div class="d-grid gap-2 col-6 mx-auto">
-            <a class="btn btn-primary" type="button" href="{{url_for('recommendation_view')}}">Find My Next Anime</a>
+        <div id = "loader" class="col text-center" style="display:none">
+            <div class="d-grid gap-2 col-6 mx-auto">
+                <div class="spinner-border" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <h4>Currently Compiling Your Recommendations</h4>
+                <h5>This may take a bit</h5>
+            </div>
+        </div>
+        <div id = "home-content">
+            <h1>Don't Know What To Watch?</h1>
+            <div class="d-grid gap-2 col-6 mx-auto">
+                <form onSubmit = "loadRecommendation()" action = "{{ url_for('recommendation_view') }}" method = "GET">
+                    <button class="btn btn-primary" type="submit">Find My Next Anime</button>
+                    <div class = "container-fluid btn-group justify-content-center" style ="padding-top: 7px"> 
+                        <select class="selectpicker p-3" id = "genre_list" name = "genre_list" multiple data-selected-text-format="count" data-live-search="true" multiple title="Genre" data-width="auto">
+                            {% for i in range(genre_list|length) %}
+                            <option value = "{{ genre_list[i] }}">
+                                {{ genre_list[i] }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <select class="selectpicker p-3" id = "year" name = "year" title="Year Greater Than" data-width="auto">
+                            {% for i in range(2022, 1939, -1) %}
+                            <option value = "{{ i }}">
+                                {{ i }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <select class="selectpicker p-3" id = "score" name = "score" title="Score Greater Than" data-width="auto">
+                            {% for i in range(10, 0, -1) %}
+                            <option value = "{{ i }}">
+                                {{ i }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <select class="selectpicker p-3" id = "format_list" name = "format_list" multiple data-selected-text-format="count" multiple title="Format" data-width="auto">
+                            {% for i in range(format_list|length) %}
+                            <option value = "{{ format_list[i] }}">
+                                {{ format_list[i] }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
