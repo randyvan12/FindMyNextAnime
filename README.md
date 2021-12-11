@@ -1,5 +1,5 @@
 # FindMyNextAnime
-[findmynextanime.com](findmynextanime.com)
+[findmynextanime.com](http://www.findmynextanime.com)
 
 ## What is this website?
 This is a webapp that recommends what you should watch next using the AniList API.
